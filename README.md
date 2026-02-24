@@ -78,6 +78,8 @@ Na aba **Início**, o app mostra o status da verificação (“Verificando atual
 
 **Se a atualização não aparecer:** confira se o Release no GitHub tem a **tag** no formato `v1.0.2` (com “v”) e se os **arquivos do build** (ex.: `.dmg` no Mac) estão anexados ao Release. Em caso de erro, a mensagem na tela exibe o motivo (rede, URL, etc.).
 
+**Repositório privado:** é possível usar atualização automática com repo privado. Com o campo Token em branco, o app tenta usar, nesta ordem: **GitHub CLI (gh)** se estiver logado; em seguida a conta salva no **Git** ou **GitHub Desktop** (credential para github.com). Se não houver nenhuma, em **Configurações** preencha o campo **Token do GitHub**: crie um Personal Access Token (GitHub → Settings → Developer settings → Personal access tokens) com permissão de leitura do repositório (`repo` ou fine-grained “Contents: Read”) e cole no app. O token fica salvo localmente no seu usuário. Todos os usuários que tiverem acesso ao repositório podem usar o próprio token.
+
 ---
 
 ## Estrutura do projeto

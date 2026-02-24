@@ -23,13 +23,15 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
     label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 0.9rem; }
-    input[type="text"] {
+    input[type="text"],
+    input[type="password"] {
       width: 100%;
       padding: 10px 12px;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 0.95rem;
     }
+    input[type="password"]:focus { outline: none; border-color: #0969da; }
     .row { margin-bottom: 14px; }
     .row:last-child { margin-bottom: 0; }
     .checkbox-row { display: flex; align-items: center; gap: 10px; }
@@ -145,6 +147,10 @@
     .history-item-body .log { max-height: 240px; }
     .history-item-actions { margin-bottom: 10px; }
     .history-item-actions .copy-log-btn { font-size: 0.85rem; padding: 6px 12px; }
+    .update-status-text { word-break: break-word; white-space: normal; }
+    .update-status-hint { font-size: 0.8rem; color: #57606a; margin-top: 6px; }
+    code { font-size: 0.85em; background: #f0f0f0; padding: 1px 4px; border-radius: 3px; }
+    .row-hint { margin-top: 6px; font-size: 0.8rem; color: #57606a; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -157,11 +163,6 @@
 
   <div id="panelInicio" class="tab-panel active">
     <div class="card">
-      <label>Atualização</label>
-      <p class="status" id="updateStatusText">Verificando atualização…</p>
-      <div class="actions" style="margin-top:4px; margin-bottom:14px">
-        <button type="button" id="checkUpdateBtn" class="secondary" style="display:none">Verificar novamente</button>
-      </div>
       <div class="actions" style="margin-top:0; margin-bottom:14px">
         <button type="button" id="pullNowBtn" class="secondary">Rodar pull agora</button>
         <button type="button" id="abortPullBtn" class="abort-btn" disabled>Abortar pull (senha)</button>
@@ -175,6 +176,12 @@
 
   <div id="panelConfiguracoes" class="tab-panel">
     <div class="card">
+      <label>Atualização</label>
+      <p class="status update-status-text" id="updateStatusText">Verificando atualização…</p>
+      <p class="status update-status-hint" id="updateStatusHint" style="display:none"></p>
+      <div class="actions" style="margin-top:4px; margin-bottom:16px">
+        <button type="button" id="checkUpdateBtn" class="secondary" style="display:none">Verificar novamente</button>
+      </div>
       <div class="row">
         <label for="reposFolder">Pasta de repositórios (opcional)</label>
         <input type="text" id="reposFolder" placeholder="Ex: /Users/voce/Projetos ou C:\Repos">
@@ -186,6 +193,11 @@
       <div class="row checkbox-row">
         <input type="checkbox" id="openAtLogin" checked>
         <label for="openAtLogin" style="margin:0">Abrir ao iniciar o computador</label>
+      </div>
+      <div class="row">
+        <label for="githubToken">Token do GitHub (repositório privado)</label>
+        <input type="password" id="githubToken" class="input-token" placeholder="Opcional. Cole aqui um Personal Access Token com acesso ao repositório." autocomplete="off">
+        <p class="status row-hint">Deixe vazio para usar uma conta já conectada: <strong>GitHub CLI (gh)</strong> ou a conta salva no <strong>Git</strong> / <strong>GitHub Desktop</strong> (credential do Git para github.com). Se não houver nenhuma, cole um token (GitHub → Settings → Developer settings → Personal access tokens). Permissão: <code>repo</code> (ou leitura do repositório).</p>
       </div>
       <div class="actions">
         <button type="button" id="saveBtn">Salvar</button>

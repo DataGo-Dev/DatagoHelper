@@ -5,6 +5,7 @@
 const reposFolderEl = document.getElementById('reposFolder');
 const includeGitHubDesktopEl = document.getElementById('includeGitHubDesktop');
 const openAtLoginEl = document.getElementById('openAtLogin');
+const githubTokenEl = document.getElementById('githubToken');
 const saveBtn = document.getElementById('saveBtn');
 const pullNowBtn = document.getElementById('pullNowBtn');
 const abortPullBtn = document.getElementById('abortPullBtn');
@@ -12,6 +13,7 @@ const saveStatusEl = document.getElementById('saveStatus');
 const lastRunEl = document.getElementById('lastRun');
 const pullLogEl = document.getElementById('pullLog');
 const updateStatusText = document.getElementById('updateStatusText');
+const updateStatusHint = document.getElementById('updateStatusHint');
 const checkUpdateBtn = document.getElementById('checkUpdateBtn');
 
 let pullInProgress = false;
@@ -29,22 +31,47 @@ function setUpdateStatusMessage(status, version, message, isPackaged) {
     case 'checking':
       updateStatusText.textContent = 'Verificando atualização…';
       updateStatusText.className = 'status';
+      updateStatusText.title = '';
+      if (updateStatusHint) updateStatusHint.style.display = 'none';
       break;
     case 'no-update':
       updateStatusText.textContent = 'Você está na versão mais recente.';
       updateStatusText.className = 'status success';
+      updateStatusText.title = '';
+      if (updateStatusHint) updateStatusHint.style.display = 'none';
       break;
     case 'available':
       updateStatusText.textContent = 'Nova versão ' + (version || '') + ' disponível. Baixando…';
       updateStatusText.className = 'status success';
+      updateStatusText.title = '';
+      if (updateStatusHint) updateStatusHint.style.display = 'none';
       break;
-    case 'error':
-      updateStatusText.textContent = 'Erro ao verificar atualização: ' + (message || '').slice(0, 120);
+    case 'error': {
+      const errMsg = (message || '').trim();
+      const is404 = errMsg.includes('404');
+      updateStatusText.textContent = 'Erro ao verificar atualização: ' + (errMsg || 'erro desconhecido');
       updateStatusText.className = 'status error';
+      updateStatusText.title = errMsg;
+      if (updateStatusHint) {
+        updateStatusHint.style.display = is404 ? 'block' : 'none';
+        updateStatusHint.textContent = is404
+          ? 'Dica: se o repositório for privado, torne-o público (Settings → General → Danger Zone) para a atualização automática funcionar.'
+          : '';
+      }
       break;
+    }
     default:
       updateStatusText.textContent = 'Verificando atualização…';
       updateStatusText.className = 'status';
+      updateStatusText.title = '';
+      if (updateStatusHint) updateStatusHint.style.display = 'none';
+  }
+  if (updateStatusText && status === 'error') {
+    updateStatusText.style.whiteSpace = 'normal';
+    updateStatusText.style.wordBreak = 'break-word';
+  } else if (updateStatusText) {
+    updateStatusText.style.whiteSpace = '';
+    updateStatusText.style.wordBreak = '';
   }
 }
 
@@ -93,6 +120,7 @@ async function loadSettings() {
   reposFolderEl.value = s.reposFolder || '';
   includeGitHubDesktopEl.checked = s.includeGitHubDesktopFolder !== false;
   openAtLoginEl.checked = s.openAtLogin !== false;
+  if (githubTokenEl) githubTokenEl.value = s.githubToken || '';
   if (s.lastRunDate) lastRunEl.textContent = s.lastRunDate;
   const versionEl = document.getElementById('appVersion');
   if (versionEl && s.appVersion) versionEl.textContent = 'v' + s.appVersion;
@@ -114,6 +142,7 @@ saveBtn.addEventListener('click', async () => {
     reposFolder: reposFolderEl.value.trim(),
     includeGitHubDesktopFolder: includeGitHubDesktopEl.checked,
     openAtLogin: openAtLoginEl.checked,
+    githubToken: githubTokenEl ? githubTokenEl.value : '',
   });
   showSaveStatus('Configurações salvas.');
 });

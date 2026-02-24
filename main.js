@@ -8,7 +8,11 @@
 
 const { app, BrowserWindow, Tray, ipcMain, nativeImage, dialog } = require('electron');
 const path = require('path');
+const { execFile, spawn } = require('child_process');
+const { promisify } = require('util');
 const Store = require('electron-store');
+
+const execFileAsync = promisify(execFile);
 const { getReposPaths, runPullInRepos } = require('./services/git-pull');
 // Require no topo para o electron-builder incluir no DMG/instalador
 const { autoUpdater } = require('electron-updater');
@@ -185,8 +189,66 @@ function sendUpdateStatusToWindow() {
   }
 }
 
-function runUpdateCheck() {
+/**
+ * Obtém o token do GitHub CLI (gh), se o usuário estiver logado.
+ * Retorna o token ou null se gh não estiver instalado/não logado.
+ */
+async function getTokenFromGhCli() {
+  try {
+    const { stdout } = await execFileAsync('gh', ['auth', 'token'], { timeout: 5000, maxBuffer: 1024 });
+    const token = (stdout || '').trim();
+    return token.length > 0 ? token : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Obtém a senha/token armazenada no Git para github.com (credential helper).
+ * Quem usa Git ou GitHub Desktop com HTTPS costuma ter um PAT salvo aqui.
+ * Retorna o valor de "password" na resposta de `git credential fill` ou null.
+ */
+function getTokenFromGitCredential() {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      resolve(value);
+    };
+    const proc = spawn('git', ['credential', 'fill'], { stdio: ['pipe', 'pipe', 'ignore'] });
+    let out = '';
+    proc.stdout.setEncoding('utf8');
+    proc.stdout.on('data', (chunk) => { out += chunk; });
+    proc.on('close', (code) => {
+      if (code !== 0) { finish(null); return; }
+      const match = (out || '').match(/password=(.+)/);
+      const token = match ? match[1].trim() : null;
+      finish(token && token.length > 0 ? token : null);
+    });
+    proc.on('error', () => finish(null));
+    proc.stdin.write('protocol=https\nhost=github.com\n');
+    proc.stdin.end();
+    setTimeout(() => { try { proc.kill(); } catch (_) {} finish(null); }, 5000);
+  });
+}
+
+async function runUpdateCheck() {
   if (!app.isPackaged) return;
+  let token = store.get('githubToken', '').trim();
+  if (!token) {
+    token = await getTokenFromGhCli();
+  }
+  if (!token) {
+    token = await getTokenFromGitCredential();
+  }
+  if (token) {
+    process.env.GH_TOKEN = token;
+    process.env.GITHUB_TOKEN = token;
+  } else {
+    delete process.env.GH_TOKEN;
+    delete process.env.GITHUB_TOKEN;
+  }
   updateCheckStatus = 'checking';
   lastUpdateError = null;
   sendUpdateStatusToWindow();
@@ -249,7 +311,7 @@ function setupAutoUpdate() {
     sendUpdateStatusToWindow();
   });
 
-  setTimeout(() => runUpdateCheck(), 2000);
+  setTimeout(() => runUpdateCheck().catch(() => {}), 2000);
 }
 
 function onAppReady() {
@@ -274,6 +336,7 @@ ipcMain.handle('get-settings', () => ({
   reposFolder: store.get('reposFolder', ''),
   includeGitHubDesktopFolder: store.get('includeGitHubDesktopFolder', true),
   openAtLogin: store.get('openAtLogin', true),
+  githubToken: store.get('githubToken', ''),
   lastRunDate: getLastRunDate(),
   appVersion: app.getVersion(),
 }));
@@ -287,15 +350,16 @@ ipcMain.handle('get-update-status', () => ({
   isPackaged: app.isPackaged,
 }));
 
-ipcMain.handle('check-for-updates-now', () => {
-  runUpdateCheck();
+ipcMain.handle('check-for-updates-now', async () => {
+  await runUpdateCheck().catch(() => {});
   return { ok: true };
 });
 
-ipcMain.handle('save-settings', (_e, { reposFolder, includeGitHubDesktopFolder, openAtLogin }) => {
+ipcMain.handle('save-settings', (_e, { reposFolder, includeGitHubDesktopFolder, openAtLogin, githubToken }) => {
   store.set('reposFolder', reposFolder || '');
   store.set('includeGitHubDesktopFolder', !!includeGitHubDesktopFolder);
   store.set('openAtLogin', !!openAtLogin);
+  if (githubToken !== undefined) store.set('githubToken', String(githubToken || '').trim());
   applyOpenAtLogin(!!openAtLogin);
   return { ok: true };
 });
