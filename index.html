@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datago Helper</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f5f5f5;
+      color: #1a1a1a;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 20px; color: #333; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 0.9rem; }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .row { margin-bottom: 14px; }
+    .row:last-child { margin-bottom: 0; }
+    .checkbox-row { display: flex; align-items: center; gap: 10px; }
+    .checkbox-row input { width: auto; margin: 0; }
+    button {
+      background: #238636;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    button.secondary { background: #57606a; }
+    button.abort-btn { background: #cf222e; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button:hover { opacity: 0.9; }
+    .actions { margin-top: 18px; }
+    .status {
+      font-size: 0.85rem;
+      color: #57606a;
+      margin-top: 12px;
+    }
+    .status.success { color: #1a7f37; }
+    .status.error { color: #cf222e; }
+    .log {
+      background: #f6f8fa;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      max-height: 320px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-entry { margin-bottom: 4px; }
+    .log-entry.log-start { font-weight: 600; color: #0969da; }
+    .log-entry.log-ok { color: #1a7f37; padding-left: 8px; }
+    .log-entry.log-stderr { color: #953800; padding-left: 12px; font-size: 0.75rem; }
+    .log-entry.fail { color: #cf222e; padding-left: 8px; }
+    .log-entry.success { color: #1a7f37; font-weight: 500; }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal[aria-hidden="false"] { display: flex; }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      min-width: 280px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .modal-title { font-weight: 600; margin: 0 0 8px; font-size: 1rem; }
+    .modal-desc { margin: 0 0 12px; font-size: 0.9rem; color: #57606a; }
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+    }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid #d0d7de; }
+    .tabs button {
+      padding: 10px 16px;
+      background: none;
+      color: #57606a;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .tabs button:hover { color: #1a1a1a; }
+    .tabs button.active { color: #0969da; border-bottom-color: #0969da; font-weight: 500; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .history-list { list-style: none; margin: 0; padding: 0; }
+    .history-item {
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .history-item-header {
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: #f6f8fa;
+    }
+    .history-item-header:hover { background: #eaeef2; }
+    .history-item-header .summary { font-weight: 500; }
+    .history-item-header .meta { font-size: 0.85rem; color: #57606a; }
+    .history-item-body {
+      padding: 12px 14px;
+      border-top: 1px solid #d0d7de;
+      background: #fff;
+    }
+    .history-item-body .log { max-height: 240px; }
+  </style>
+</head>
+<body>
+  <h1>Datago Helper</h1>
+  <div class="tabs">
+    <button type="button" id="tabInicio" class="active">Início</button>
+    <button type="button" id="tabHistorico">Histórico</button>
+  </div>
+
+  <div id="panelInicio" class="tab-panel active">
+  <div class="card">
+    <div class="row">
+      <label for="reposFolder">Pasta de repositórios (opcional)</label>
+      <input type="text" id="reposFolder" placeholder="Ex: /Users/voce/Projetos ou C:\Repos">
+    </div>
+    <div class="row checkbox-row">
+      <input type="checkbox" id="includeGitHubDesktop" checked>
+      <label for="includeGitHubDesktop" style="margin:0">Incluir pasta padrão do GitHub Desktop (Documents/GitHub)</label>
+    </div>
+    <div class="row checkbox-row">
+      <input type="checkbox" id="openAtLogin" checked>
+      <label for="openAtLogin" style="margin:0">Abrir ao iniciar o computador</label>
+    </div>
+    <div class="actions">
+      <button type="button" id="saveBtn">Salvar</button>
+      <button type="button" id="pullNowBtn" class="secondary">Rodar pull agora</button>
+    </div>
+    <p class="status" id="saveStatus"></p>
+  </div>
+
+  <div class="card">
+    <label>Última execução</label>
+    <p class="status" id="lastRun">—</p>
+    <label style="margin-top:12px">Resultado do pull</label>
+    <div class="log" id="pullLog">Aguardando…</div>
+    <div class="actions" style="margin-top:10px">
+      <button type="button" id="abortPullBtn" class="abort-btn" disabled>Abortar pull (senha)</button>
+    </div>
+  </div>
+  </div>
+
+  <div id="panelHistorico" class="tab-panel">
+    <div class="card">
+      <label>Log de execuções</label>
+      <p class="status">Clique em uma execução para ver o log de sucessos e erros daquele momento.</p>
+      <ul id="historyList" class="history-list"></ul>
+    </div>
+  </div>
+
+  <!-- Modal para senha do abortar -->
+  <div id="abortModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <p class="modal-title">Abortar pull</p>
+      <p class="modal-desc">Digite a senha para interromper o pull:</p>
+      <input type="password" id="abortPasswordInput" class="modal-input" placeholder="Senha" autocomplete="off">
+      <div class="modal-actions">
+        <button type="button" id="abortModalCancel" class="secondary">Cancelar</button>
+        <button type="button" id="abortModalConfirm" class="abort-btn">Abortar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
