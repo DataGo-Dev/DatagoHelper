@@ -60,6 +60,8 @@ async function loadSettings() {
   includeGitHubDesktopEl.checked = s.includeGitHubDesktopFolder !== false;
   openAtLoginEl.checked = s.openAtLogin !== false;
   if (s.lastRunDate) lastRunEl.textContent = s.lastRunDate;
+  const versionEl = document.getElementById('appVersion');
+  if (versionEl && s.appVersion) versionEl.textContent = 'v' + s.appVersion;
 
   // Ao abrir a janela: informar no log se o pull de hoje já foi executado
   pullLogEl.innerHTML = '';
@@ -129,12 +131,21 @@ abortPasswordInput.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeAbortModal();
 });
 
-// Abas Início / Histórico
+// Abas Início / Configurações / Histórico
 const tabInicio = document.getElementById('tabInicio');
+const tabConfiguracoes = document.getElementById('tabConfiguracoes');
 const tabHistorico = document.getElementById('tabHistorico');
 const panelInicio = document.getElementById('panelInicio');
+const panelConfiguracoes = document.getElementById('panelConfiguracoes');
 const panelHistorico = document.getElementById('panelHistorico');
 const historyListEl = document.getElementById('historyList');
+
+function switchTab(activeTab, activePanel) {
+  [tabInicio, tabConfiguracoes, tabHistorico].forEach((t) => t.classList.remove('active'));
+  [panelInicio, panelConfiguracoes, panelHistorico].forEach((p) => p.classList.remove('active'));
+  activeTab.classList.add('active');
+  activePanel.classList.add('active');
+}
 
 function formatDateForDisplay(dateStr) {
   if (!dateStr || dateStr.length < 10) return dateStr;
@@ -197,18 +208,12 @@ function renderHistoryList(history) {
   });
 }
 
-tabInicio.addEventListener('click', () => {
-  tabInicio.classList.add('active');
-  tabHistorico.classList.remove('active');
-  panelInicio.classList.add('active');
-  panelHistorico.classList.remove('active');
-});
+tabInicio.addEventListener('click', () => switchTab(tabInicio, panelInicio));
+
+tabConfiguracoes.addEventListener('click', () => switchTab(tabConfiguracoes, panelConfiguracoes));
 
 tabHistorico.addEventListener('click', async () => {
-  tabHistorico.classList.add('active');
-  tabInicio.classList.remove('active');
-  panelHistorico.classList.add('active');
-  panelInicio.classList.remove('active');
+  switchTab(tabHistorico, panelHistorico);
   const history = await window.datago.getExecutionHistory();
   renderHistoryList(history);
 });
@@ -250,6 +255,14 @@ window.datago.onPullResult(async (data) => {
     const history = await window.datago.getExecutionHistory();
     renderHistoryList(history);
   }
+});
+
+// Aviso quando houver atualização disponível
+window.datago.onUpdateAvailable((data) => {
+  showSaveStatus('Nova versão ' + (data.version || '') + ' disponível. Baixando…');
+});
+window.datago.onUpdateError(() => {
+  // Silencioso: a verificação pode falhar (rede, etc.)
 });
 
 loadSettings();

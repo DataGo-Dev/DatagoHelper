@@ -6,10 +6,15 @@
  * - Repositórios: pasta informada pelo usuário + opcionalmente pasta padrão do GitHub Desktop
  */
 
-const { app, BrowserWindow, Tray, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, ipcMain, nativeImage, dialog } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const { getReposPaths, runPullInRepos } = require('./services/git-pull');
+
+let autoUpdater;
+if (app.isPackaged) {
+  autoUpdater = require('electron-updater').autoUpdater;
+}
 
 const store = new Store({ name: 'datago-helper' });
 
@@ -169,6 +174,42 @@ function scheduleNextRun() {
   }, CHECK_INTERVAL_MS);
 }
 
+function setupAutoUpdate() {
+  if (!autoUpdater) return;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', (info) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-available', { version: info.version });
+    }
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Atualização disponível',
+        message: 'Uma nova versão foi baixada. Reiniciar o Datago Helper agora para instalar?',
+        buttons: ['Reiniciar agora', 'Depois'],
+      }).then(({ response }) => {
+        if (response === 0) autoUpdater.quitAndInstall(false, true);
+      });
+    }
+  });
+
+  autoUpdater.on('error', (err) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-error', { message: err.message });
+    }
+  });
+
+  // Verificar após um pequeno delay para não bloquear a abertura
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch(() => {});
+  }, 3000);
+}
+
 function onAppReady() {
   createTray();
   applyOpenAtLogin(store.get('openAtLogin', true));
@@ -180,6 +221,8 @@ function onAppReady() {
   }
   scheduleNextRun();
 
+  setupAutoUpdate();
+
   // Abrir janela ao iniciar para facilitar a primeira configuração
   createWindow();
 }
@@ -190,6 +233,7 @@ ipcMain.handle('get-settings', () => ({
   includeGitHubDesktopFolder: store.get('includeGitHubDesktopFolder', true),
   openAtLogin: store.get('openAtLogin', true),
   lastRunDate: getLastRunDate(),
+  appVersion: app.getVersion(),
 }));
 
 ipcMain.handle('get-execution-history', () => store.get('executionHistory', []));

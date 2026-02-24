@@ -14,6 +14,7 @@
       color: #1a1a1a;
     }
     h1 { font-size: 1.25rem; margin: 0 0 20px; color: #333; }
+    .app-version { font-weight: normal; color: #57606a; font-size: 0.9em; }
     .card {
       background: #fff;
       border-radius: 10px;
@@ -145,42 +146,45 @@
   </style>
 </head>
 <body>
-  <h1>Datago Helper</h1>
+  <h1>Datago Helper <span id="appVersion" class="app-version"></span></h1>
   <div class="tabs">
     <button type="button" id="tabInicio" class="active">Início</button>
+    <button type="button" id="tabConfiguracoes">Configurações</button>
     <button type="button" id="tabHistorico">Histórico</button>
   </div>
 
   <div id="panelInicio" class="tab-panel active">
-  <div class="card">
-    <div class="row">
-      <label for="reposFolder">Pasta de repositórios (opcional)</label>
-      <input type="text" id="reposFolder" placeholder="Ex: /Users/voce/Projetos ou C:\Repos">
+    <div class="card">
+      <div class="actions" style="margin-top:0; margin-bottom:14px">
+        <button type="button" id="pullNowBtn" class="secondary">Rodar pull agora</button>
+        <button type="button" id="abortPullBtn" class="abort-btn" disabled>Abortar pull (senha)</button>
+      </div>
+      <label>Última execução</label>
+      <p class="status" id="lastRun">—</p>
+      <label style="margin-top:12px">Resultado do pull</label>
+      <div class="log" id="pullLog">Aguardando…</div>
     </div>
-    <div class="row checkbox-row">
-      <input type="checkbox" id="includeGitHubDesktop" checked>
-      <label for="includeGitHubDesktop" style="margin:0">Incluir pasta padrão do GitHub Desktop (Documents/GitHub)</label>
-    </div>
-    <div class="row checkbox-row">
-      <input type="checkbox" id="openAtLogin" checked>
-      <label for="openAtLogin" style="margin:0">Abrir ao iniciar o computador</label>
-    </div>
-    <div class="actions">
-      <button type="button" id="saveBtn">Salvar</button>
-      <button type="button" id="pullNowBtn" class="secondary">Rodar pull agora</button>
-    </div>
-    <p class="status" id="saveStatus"></p>
   </div>
 
-  <div class="card">
-    <label>Última execução</label>
-    <p class="status" id="lastRun">—</p>
-    <label style="margin-top:12px">Resultado do pull</label>
-    <div class="log" id="pullLog">Aguardando…</div>
-    <div class="actions" style="margin-top:10px">
-      <button type="button" id="abortPullBtn" class="abort-btn" disabled>Abortar pull (senha)</button>
+  <div id="panelConfiguracoes" class="tab-panel">
+    <div class="card">
+      <div class="row">
+        <label for="reposFolder">Pasta de repositórios (opcional)</label>
+        <input type="text" id="reposFolder" placeholder="Ex: /Users/voce/Projetos ou C:\Repos">
+      </div>
+      <div class="row checkbox-row">
+        <input type="checkbox" id="includeGitHubDesktop" checked>
+        <label for="includeGitHubDesktop" style="margin:0">Incluir pasta padrão do GitHub Desktop (Documents/GitHub)</label>
+      </div>
+      <div class="row checkbox-row">
+        <input type="checkbox" id="openAtLogin" checked>
+        <label for="openAtLogin" style="margin:0">Abrir ao iniciar o computador</label>
+      </div>
+      <div class="actions">
+        <button type="button" id="saveBtn">Salvar</button>
+      </div>
+      <p class="status" id="saveStatus"></p>
     </div>
-  </div>
   </div>
 
   <div id="panelHistorico" class="tab-panel">

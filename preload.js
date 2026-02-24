@@ -19,4 +19,10 @@ contextBridge.exposeInMainWorld('datago', {
   onPullResult: (fn) => {
     ipcRenderer.on('pull-result', (_e, data) => fn(data));
   },
+  onUpdateAvailable: (fn) => {
+    ipcRenderer.on('update-available', (_e, data) => fn(data));
+  },
+  onUpdateError: (fn) => {
+    ipcRenderer.on('update-error', (_e, data) => fn(data));
+  },
 });

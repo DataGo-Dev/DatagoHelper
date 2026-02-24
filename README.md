@@ -55,6 +55,25 @@ Depois de instalar, o “abrir ao iniciar” passa a funcionar conforme a opçã
 
 ---
 
+## Atualização automática
+
+Ao iniciar, o app (quando instalado a partir do build) **verifica no GitHub** se existe uma versão mais nova. Se existir:
+
+1. O download da nova versão é feito em segundo plano.
+2. Quando terminar, aparece um diálogo perguntando se deseja **reiniciar agora** para instalar.
+3. Se escolher “Depois”, a instalação ocorre na próxima vez que você fechar o app.
+
+**Para publicar uma nova versão e seus usuários receberem a atualização:**
+
+1. Atualize o `version` no `package.json` (ex.: `"1.1.0"`).
+2. Gere o build: `npm run build:mac` e/ou `npm run build:win`.
+3. Crie um **Release** no GitHub (aba Releases do repositório), com a tag igual à versão (ex.: `v1.1.0`).
+4. Anexe os arquivos gerados em `dist/` (o instalador .exe no Windows, o .dmg ou .zip no Mac).
+
+O `package.json` já está configurado com `repository` e `build.publish` apontando para o repositório GitHub. Se o seu repositório for outro, altere `owner` e `repo` em `build.publish` e a URL em `repository`.
+
+---
+
 ## Estrutura do projeto
 
 - **`main.js`** – Processo principal: bandeja, agendamento 09:30, execução ao iniciar, configurações.
