@@ -1,6 +1,6 @@
 {
   "name": "datago-helper",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Agenda pull diário dos seus repositórios Git (09:30 ou ao iniciar o PC).",
   "main": "main.js",
   "repository": {
@@ -10,7 +10,8 @@
   "scripts": {
     "start": "electron .",
     "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win"
+    "build:win": "electron-builder --win",
+    "prepare-release": "node scripts/copy-to-release.js"
   },
   "author": "",
   "license": "MIT",
@@ -32,7 +33,7 @@
       "provider": "github",
       "owner": "luanhenrique",
       "repo": "DatagoHelper",
-      "private": true
+      "private": false
     },
     "mac": {
       "category": "public.app-category.productivity",

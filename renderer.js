@@ -49,14 +49,19 @@ function setUpdateStatusMessage(status, version, message, isPackaged) {
     case 'error': {
       const errMsg = (message || '').trim();
       const is404 = errMsg.includes('404');
+      const isNoLatest = errMsg.includes('releases/latest') || errMsg.includes('production release');
       updateStatusText.textContent = 'Erro ao verificar atualização: ' + (errMsg || 'erro desconhecido');
       updateStatusText.className = 'status error';
       updateStatusText.title = errMsg;
       if (updateStatusHint) {
-        updateStatusHint.style.display = is404 ? 'block' : 'none';
-        updateStatusHint.textContent = is404
-          ? 'Dica: se o repositório for privado, torne-o público (Settings → General → Danger Zone) para a atualização automática funcionar.'
-          : '';
+        updateStatusHint.style.display = is404 || isNoLatest ? 'block' : 'none';
+        if (isNoLatest) {
+          updateStatusHint.textContent = 'Dica: (1) Use um token clássico com escopo "repo" (fine-grained só "Contents" pode dar 404). (2) Release publicado (não rascunho, não Pre-release), tag ex.: v1.0.3. (3) Anexe todos os arquivos de dist/: o instalador (.dmg ou .exe) e os .yml (ex.: latest-mac.yml).';
+        } else if (is404) {
+          updateStatusHint.textContent = 'Dica: se o repositório for privado, use um token em Configurações ou torne-o público.';
+        } else {
+          updateStatusHint.textContent = '';
+        }
       }
       break;
     }

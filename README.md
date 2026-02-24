@@ -69,8 +69,16 @@ Ao iniciar, o app (quando instalado a partir do build) **verifica no GitHub** se
 
 1. Atualize o `version` no `package.json` (ex.: `"1.1.0"`).
 2. Gere o build: `npm run build:mac` e/ou `npm run build:win`.
-3. Crie um **Release** no GitHub (aba Releases do repositório), com a tag igual à versão (ex.: `v1.1.0`).
-4. Anexe os arquivos gerados em `dist/` (o instalador .exe no Windows, o .dmg ou .zip no Mac).
+3. No GitHub, vá em **Releases** → **Create a new release**:
+   - **Tag:** ex. `v1.1.0` (com "v" + número da versão).
+   - **Release title:** ex. "v1.1.0".
+   - **Importante:** publique o release (clique em **Publish release**), não deixe como rascunho (Draft). Não marque como **Pre-release**, senão o app não o considera como "latest".
+4. Anexe **todos** os arquivos relevantes de `dist/` ao release:
+   - **Mac:** o `.dmg` (ou `.zip`) e o **`latest-mac.yml`** (obrigatório para o updater encontrar a versão).
+   - **Windows:** o instalador `.exe` e o **`latest.yml`**.
+   - O GitHub aceita .dmg e .exe: na página do release, role até **"Attach binaries by dropping them here or selecting them"** e arraste ou selecione os arquivos. Se não aparecer opção de anexar, use o link "Edit" do release e role até o final.
+
+**Repositório privado e 404 em "releases/latest":** use um token **clássico** (classic PAT) com escopo **`repo`**. Tokens fine-grained só com "Contents: read" podem gerar 404 na API de Releases; o escopo `repo` evita isso.
 
 O `package.json` já está configurado com `repository` e `build.publish` apontando para o repositório GitHub. Se o seu repositório for outro, altere `owner` e `repo` em `build.publish` e a URL em `repository`.
 
