@@ -11,8 +11,42 @@ const abortPullBtn = document.getElementById('abortPullBtn');
 const saveStatusEl = document.getElementById('saveStatus');
 const lastRunEl = document.getElementById('lastRun');
 const pullLogEl = document.getElementById('pullLog');
+const updateStatusText = document.getElementById('updateStatusText');
+const checkUpdateBtn = document.getElementById('checkUpdateBtn');
 
 let pullInProgress = false;
+
+function setUpdateStatusMessage(status, version, message, isPackaged) {
+  if (!updateStatusText) return;
+  if (!isPackaged) {
+    updateStatusText.textContent = 'Verificação de atualização apenas no app instalado.';
+    if (checkUpdateBtn) checkUpdateBtn.style.display = 'none';
+    return;
+  }
+  if (checkUpdateBtn) checkUpdateBtn.style.display = 'block';
+  switch (status) {
+    case 'idle':
+    case 'checking':
+      updateStatusText.textContent = 'Verificando atualização…';
+      updateStatusText.className = 'status';
+      break;
+    case 'no-update':
+      updateStatusText.textContent = 'Você está na versão mais recente.';
+      updateStatusText.className = 'status success';
+      break;
+    case 'available':
+      updateStatusText.textContent = 'Nova versão ' + (version || '') + ' disponível. Baixando…';
+      updateStatusText.className = 'status success';
+      break;
+    case 'error':
+      updateStatusText.textContent = 'Erro ao verificar atualização: ' + (message || '').slice(0, 120);
+      updateStatusText.className = 'status error';
+      break;
+    default:
+      updateStatusText.textContent = 'Verificando atualização…';
+      updateStatusText.className = 'status';
+  }
+}
 
 function showSaveStatus(msg, isError = false) {
   saveStatusEl.textContent = msg;
@@ -62,6 +96,9 @@ async function loadSettings() {
   if (s.lastRunDate) lastRunEl.textContent = s.lastRunDate;
   const versionEl = document.getElementById('appVersion');
   if (versionEl && s.appVersion) versionEl.textContent = 'v' + s.appVersion;
+
+  const updateStatus = await window.datago.getUpdateStatus();
+  setUpdateStatusMessage(updateStatus.status, updateStatus.version, updateStatus.message, updateStatus.isPackaged);
 
   // Ao abrir a janela: informar no log se o pull de hoje já foi executado
   pullLogEl.innerHTML = '';
@@ -295,12 +332,26 @@ window.datago.onPullResult(async (data) => {
   }
 });
 
-// Aviso quando houver atualização disponível
+checkUpdateBtn.addEventListener('click', async () => {
+  setUpdateStatusMessage('checking', null, null, true);
+  await window.datago.checkForUpdatesNow();
+});
+
+window.datago.onUpdateCheckStarted(() => {
+  setUpdateStatusMessage('checking', null, null, true);
+});
+window.datago.onUpdateNotAvailable(() => {
+  setUpdateStatusMessage('no-update', null, null, true);
+});
 window.datago.onUpdateAvailable((data) => {
+  setUpdateStatusMessage('available', data.version, null, true);
   showSaveStatus('Nova versão ' + (data.version || '') + ' disponível. Baixando…');
 });
-window.datago.onUpdateError(() => {
-  // Silencioso: a verificação pode falhar (rede, etc.)
+window.datago.onUpdateError((data) => {
+  setUpdateStatusMessage('error', null, data?.message || '', true);
+});
+window.datago.onUpdateStatus((data) => {
+  setUpdateStatusMessage(data.status, data.version, data.message, true);
 });
 
 loadSettings();

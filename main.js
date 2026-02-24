@@ -21,6 +21,10 @@ let mainWindow = null;
 let tray = null;
 let pullAbortRequested = false;
 
+let updateCheckStatus = 'idle';
+let lastUpdateVersion = null;
+let lastUpdateError = null;
+
 // Criar janela principal (configurações + status)
 function createWindow() {
   if (mainWindow) {
@@ -171,15 +175,56 @@ function scheduleNextRun() {
   }, CHECK_INTERVAL_MS);
 }
 
+function sendUpdateStatusToWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-status', {
+      status: updateCheckStatus,
+      version: lastUpdateVersion,
+      message: lastUpdateError,
+    });
+  }
+}
+
+function runUpdateCheck() {
+  if (!app.isPackaged) return;
+  updateCheckStatus = 'checking';
+  lastUpdateError = null;
+  sendUpdateStatusToWindow();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-check-started');
+  }
+  autoUpdater.checkForUpdates().then((result) => {
+    if (updateCheckStatus === 'checking' && !result?.updateInfo?.version) {
+      updateCheckStatus = 'no-update';
+      lastUpdateVersion = null;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update-not-available');
+      }
+      sendUpdateStatusToWindow();
+    }
+  }).catch((err) => {
+    updateCheckStatus = 'error';
+    lastUpdateError = err.message || String(err);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-error', { message: lastUpdateError });
+    }
+    sendUpdateStatusToWindow();
+  });
+}
+
 function setupAutoUpdate() {
   if (!app.isPackaged) return;
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('update-available', (info) => {
+    updateCheckStatus = 'available';
+    lastUpdateVersion = info.version || null;
+    lastUpdateError = null;
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('update-available', { version: info.version });
     }
+    sendUpdateStatusToWindow();
   });
 
   autoUpdater.on('update-downloaded', () => {
@@ -196,15 +241,15 @@ function setupAutoUpdate() {
   });
 
   autoUpdater.on('error', (err) => {
+    updateCheckStatus = 'error';
+    lastUpdateError = err.message || String(err);
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-error', { message: err.message });
+      mainWindow.webContents.send('update-error', { message: lastUpdateError });
     }
+    sendUpdateStatusToWindow();
   });
 
-  // Verificar após um pequeno delay para não bloquear a abertura
-  setTimeout(() => {
-    autoUpdater.checkForUpdates().catch(() => {});
-  }, 3000);
+  setTimeout(() => runUpdateCheck(), 2000);
 }
 
 function onAppReady() {
@@ -234,6 +279,18 @@ ipcMain.handle('get-settings', () => ({
 }));
 
 ipcMain.handle('get-execution-history', () => store.get('executionHistory', []));
+
+ipcMain.handle('get-update-status', () => ({
+  status: updateCheckStatus,
+  version: lastUpdateVersion,
+  message: lastUpdateError,
+  isPackaged: app.isPackaged,
+}));
+
+ipcMain.handle('check-for-updates-now', () => {
+  runUpdateCheck();
+  return { ok: true };
+});
 
 ipcMain.handle('save-settings', (_e, { reposFolder, includeGitHubDesktopFolder, openAtLogin }) => {
   store.set('reposFolder', reposFolder || '');

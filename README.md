@@ -74,6 +74,10 @@ Ao iniciar, o app (quando instalado a partir do build) **verifica no GitHub** se
 
 O `package.json` já está configurado com `repository` e `build.publish` apontando para o repositório GitHub. Se o seu repositório for outro, altere `owner` e `repo` em `build.publish` e a URL em `repository`.
 
+Na aba **Início**, o app mostra o status da verificação (“Verificando atualização…”, “Você está na versão mais recente” ou “Nova versão X disponível”) e um botão **Verificar novamente** para checar de novo.
+
+**Se a atualização não aparecer:** confira se o Release no GitHub tem a **tag** no formato `v1.0.2` (com “v”) e se os **arquivos do build** (ex.: `.dmg` no Mac) estão anexados ao Release. Em caso de erro, a mensagem na tela exibe o motivo (rede, URL, etc.).
+
 ---
 
 ## Estrutura do projeto
