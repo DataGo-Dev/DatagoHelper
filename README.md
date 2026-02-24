@@ -48,6 +48,8 @@ Tamanhos sugeridos: 22×22 px (Mac) e 16×16 px (Windows). Se o arquivo não exi
 
 ## Gerar instalador (build)
 
+Os módulos em **`dependencies`** são empacotados dentro do app (DMG/instalador). Quem instala pelo DMG não roda `npm install` — tudo já vai no pacote. Antes de gerar o build, rode `npm install` e depois o build:
+
 - **Mac:** `npm run build:mac` → gera app e DMG em `dist/`.
 - **Windows:** `npm run build:win` → gera instalador NSIS em `dist/`.
 

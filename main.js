@@ -10,11 +10,8 @@ const { app, BrowserWindow, Tray, ipcMain, nativeImage, dialog } = require('elec
 const path = require('path');
 const Store = require('electron-store');
 const { getReposPaths, runPullInRepos } = require('./services/git-pull');
-
-let autoUpdater;
-if (app.isPackaged) {
-  autoUpdater = require('electron-updater').autoUpdater;
-}
+// Require no topo para o electron-builder incluir no DMG/instalador
+const { autoUpdater } = require('electron-updater');
 
 const store = new Store({ name: 'datago-helper' });
 
@@ -175,7 +172,7 @@ function scheduleNextRun() {
 }
 
 function setupAutoUpdate() {
-  if (!autoUpdater) return;
+  if (!app.isPackaged) return;
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
