@@ -153,6 +153,30 @@ function formatDateForDisplay(dateStr) {
   return d + '/' + m + '/' + y;
 }
 
+function executionLogAsPlainText(entry) {
+  const dateDisplay = formatDateForDisplay(entry.dateStr) + ' às ' + (entry.timeStr || '');
+  const summary = entry.aborted
+    ? `Interrompido: ${entry.okCount} ok, ${entry.failCount} com erro`
+    : `${entry.okCount} ok, ${entry.failCount} com erro`;
+  let text = dateDisplay + ' — ' + summary + '\n\n';
+  if (!entry.results || entry.results.length === 0) {
+    text += 'Nenhum repositório nesta execução.';
+    return text;
+  }
+  entry.results.forEach((r) => {
+    text += '▶ ' + r.name + ' — ';
+    if (r.ok) {
+      text += 'OK';
+      if (r.stdout) text += ' ' + r.stdout;
+      if (r.stderr) text += '\n  stderr: ' + r.stderr;
+    } else {
+      text += 'ERRO: ' + (r.error || r.stderr || '');
+    }
+    text += '\n';
+  });
+  return text;
+}
+
 function renderExecutionLog(results) {
   if (!results || results.length === 0) return escapeHtml('Nenhum repositório nesta execução.');
   const lines = results.map((r) => {
@@ -193,6 +217,7 @@ function renderHistoryList(history) {
       '<div class="history-item-body" id="history-body-' +
       entry.id +
       '" style="display:none">' +
+      '<div class="history-item-actions"><button type="button" class="copy-log-btn secondary">Copiar log</button></div>' +
       '<div class="log">' +
       renderExecutionLog(entry.results) +
       '</div>' +
@@ -200,10 +225,23 @@ function renderHistoryList(history) {
     historyListEl.appendChild(li);
     const header = li.querySelector('.history-item-header');
     const body = li.querySelector('.history-item-body');
+    const copyBtn = body.querySelector('.copy-log-btn');
     header.addEventListener('click', () => {
       const isHidden = body.style.display === 'none';
       document.querySelectorAll('.history-item-body').forEach((b) => (b.style.display = 'none'));
       body.style.display = isHidden ? 'block' : 'none';
+    });
+    copyBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const text = executionLogAsPlainText(entry);
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = 'Copiado!';
+        setTimeout(() => { copyBtn.textContent = 'Copiar log'; }, 2000);
+      } catch (_) {
+        copyBtn.textContent = 'Falha ao copiar';
+        setTimeout(() => { copyBtn.textContent = 'Copiar log'; }, 2000);
+      }
     });
   });
 }

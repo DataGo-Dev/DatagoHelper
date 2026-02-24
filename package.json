@@ -1,6 +1,6 @@
 {
   "name": "datago-helper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Agenda pull diário dos seus repositórios Git (09:30 ou ao iniciar o PC).",
   "main": "main.js",
   "repository": {
