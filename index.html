@@ -179,11 +179,14 @@
       <label>Atualização</label>
       <p class="status update-status-text" id="updateStatusText">Verificando atualização…</p>
       <p class="status update-status-hint" id="updateStatusHint" style="display:none"></p>
-      <div class="actions" style="margin-top:4px; margin-bottom:16px">
+      <div class="actions" style="margin-top:4px">
         <button type="button" id="checkUpdateBtn" class="secondary" style="display:none">Verificar novamente</button>
       </div>
+    </div>
+    <div class="card">
+      <label>Pasta de repositórios</label>
       <div class="row">
-        <label for="reposFolder">Pasta de repositórios (opcional)</label>
+        <label for="reposFolder" style="font-weight:normal; margin-top:8px">Pasta (opcional)</label>
         <input type="text" id="reposFolder" placeholder="Ex: /Users/voce/Projetos ou C:\Repos">
       </div>
       <div class="row checkbox-row">
@@ -194,10 +197,12 @@
         <input type="checkbox" id="openAtLogin" checked>
         <label for="openAtLogin" style="margin:0">Abrir ao iniciar o computador</label>
       </div>
+    </div>
+    <div class="card">
+      <label>Token do GitHub</label>
+      <p class="status row-hint" style="margin-bottom:10px">Para repositório privado. Deixe vazio para usar conta do <strong>GitHub CLI</strong> ou <strong>Git</strong> / <strong>GitHub Desktop</strong>.</p>
       <div class="row">
-        <label for="githubToken">Token do GitHub (repositório privado)</label>
-        <input type="password" id="githubToken" class="input-token" placeholder="Opcional. Cole aqui um Personal Access Token com acesso ao repositório." autocomplete="off">
-        <p class="status row-hint">Deixe vazio para usar uma conta já conectada: <strong>GitHub CLI (gh)</strong> ou a conta salva no <strong>Git</strong> / <strong>GitHub Desktop</strong> (credential do Git para github.com). Se não houver nenhuma, cole um token (GitHub → Settings → Developer settings → Personal access tokens). Permissão: <code>repo</code> (ou leitura do repositório).</p>
+        <input type="password" id="githubToken" class="input-token" placeholder="Personal Access Token (opcional)" autocomplete="off">
       </div>
       <div class="actions">
         <button type="button" id="saveBtn">Salvar</button>

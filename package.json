@@ -5,7 +5,7 @@
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/luanhenrique/DatagoHelper.git"
+    "url": "https://github.com/DataGo-Dev/DatagoHelper.git"
   },
   "scripts": {
     "start": "electron .",
@@ -20,29 +20,34 @@
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
+    "builder-util-runtime": "9.5.1",
     "electron-store": "^8.1.0",
-    "electron-updater": "^6.1.7"
+    "electron-updater": "^6.1.7",
+    "js-yaml": "^4.1.0"
   },
   "build": {
     "appId": "com.datago.helper",
     "productName": "Datago Helper",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "publish": {
       "provider": "github",
-      "owner": "luanhenrique",
+      "owner": "DataGo-Dev",
       "repo": "DatagoHelper",
       "private": false
     },
     "mac": {
       "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
       "target": [
         "dmg",
         "zip"
       ]
     },
     "win": {
+      "icon": "build/icon.png",
       "target": [
         "nsis"
       ]

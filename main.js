@@ -14,6 +14,7 @@ const Store = require('electron-store');
 
 const execFileAsync = promisify(execFile);
 const { getReposPaths, runPullInRepos } = require('./services/git-pull');
+const { PublicGitHubProvider } = require('./services/public-github-provider');
 // Require no topo para o electron-builder incluir no DMG/instalador
 const { autoUpdater } = require('electron-updater');
 
@@ -48,7 +49,10 @@ function createWindow() {
     title: 'Datago Helper',
   });
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.maximize();
+  });
   mainWindow.on('close', (e) => {
     if (!app.isQuitting) {
       e.preventDefault();
@@ -255,27 +259,42 @@ async function runUpdateCheck() {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('update-check-started');
   }
-  autoUpdater.checkForUpdates().then((result) => {
-    if (updateCheckStatus === 'checking' && !result?.updateInfo?.version) {
-      updateCheckStatus = 'no-update';
-      lastUpdateVersion = null;
+
+  const TIMEOUT_MS = 15000;
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Verificação de atualização demorou demais. Tente de novo.')), TIMEOUT_MS);
+  });
+
+  Promise.race([autoUpdater.checkForUpdates(), timeoutPromise])
+    .then((result) => {
+      if (result && typeof result === 'object' && updateCheckStatus === 'checking' && !result?.updateInfo?.version) {
+        updateCheckStatus = 'no-update';
+        lastUpdateVersion = null;
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('update-not-available');
+        }
+        sendUpdateStatusToWindow();
+      }
+    })
+    .catch((err) => {
+      updateCheckStatus = 'error';
+      lastUpdateError = err.message || String(err);
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('update-not-available');
+        mainWindow.webContents.send('update-error', { message: lastUpdateError });
       }
       sendUpdateStatusToWindow();
-    }
-  }).catch((err) => {
-    updateCheckStatus = 'error';
-    lastUpdateError = err.message || String(err);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-error', { message: lastUpdateError });
-    }
-    sendUpdateStatusToWindow();
-  });
+    });
 }
 
 function setupAutoUpdate() {
   if (!app.isPackaged) return;
+  // Usar API pública do GitHub em vez do feed releases.atom (que retorna 404)
+  autoUpdater.setFeedURL({
+    provider: 'custom',
+    updateProvider: PublicGitHubProvider,
+    owner: 'DataGo-Dev',
+    repo: 'DatagoHelper',
+  });
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 

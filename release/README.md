@@ -15,12 +15,12 @@ Os arquivos desta pasta são os que você deve **anexar** ao Release no GitHub p
 
 3. No GitHub: **Releases** → crie ou edite o release (tag ex.: `v1.0.4`) → **Attach binaries** → anexe **todos** os arquivos que estão dentro de `release/` (incluindo os `.yml`).
 
-## Arquivos necessários
+## Arquivos necessários (só estes)
 
 - **Mac:** `latest-mac.yml` + o instalador (`.dmg` e/ou `.zip`)
 - **Windows:** `latest.yml` + o instalador (`.exe`)
 
-O electron-updater procura o arquivo `.yml` no release para saber a versão e o link do instalador. Sem o `.yml`, o app não encontra a atualização.
+**Não** anexe a pasta `mac-arm64/` (nem outras pastas do build). O script `copy-to-release.js` já deixa em `release/` só os arquivos que devem ir para o GitHub. O electron-updater usa o `.yml` para saber a versão e o link do instalador.
 
 ## Repositório público
 

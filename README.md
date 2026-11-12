@@ -55,6 +55,24 @@ Os módulos em **`dependencies`** são empacotados dentro do app (DMG/instalador
 
 Depois de instalar, o “abrir ao iniciar” passa a funcionar conforme a opção nas configurações.
 
+### Mac: mensagem "O arquivo está danificado"
+
+Em outras máquinas, o macOS pode exibir que o app "está danificado" ao abrir o DMG ou o app. **Isso acontece porque o app não está assinado** com um certificado da Apple (Gatekeeper bloqueia apps de desenvolvedor não identificado).
+
+**Quem for instalar (contorno rápido):**
+
+1. Abra o DMG e arraste o app para Aplicativos.
+2. Em **Aplicativos**, clique com o **botão direito** (ou Control + clique) em **Datago Helper** → **Abrir**.
+3. Confirme em "Abrir" na janela que aparecer. Na próxima vez o app abre normalmente.
+
+Alternativa no Terminal (remove o atributo de quarentena do app já instalado):
+
+```bash
+xattr -cr "/Applications/Datago Helper.app"
+```
+
+**Para distribuir sem esse aviso (solução definitiva):** é preciso **assinar e notarizar** o app com uma conta **Apple Developer** (paga, ~US$ 99/ano). Em [developer.apple.com](https://developer.apple.com) crie um certificado **Developer ID Application** e um App-specific password; depois defina as variáveis `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` e `CSC_NAME` e rode `npm run build:mac`. Documentação: [Code Signing (macOS) – electron-builder](https://www.electron.build/code-signing-mac.html).
+
 ---
 
 ## Atualização automática
